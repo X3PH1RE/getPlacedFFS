@@ -1,0 +1,86 @@
+import { supabase } from './supabaseClient'
+
+export type Job = {
+  id: string
+  company: string
+  role: string
+  deadline: string // ISO date (yyyy-mm-dd)
+  min_ug_cgpa: number | null
+  created_at?: string
+}
+
+export type JobField = {
+  id: string
+  job_id: string
+  key: string
+  label: string
+  type: 'text' | 'number' | 'date'
+  required: boolean
+}
+
+export async function listJobs(): Promise<Job[]> {
+  const { data, error } = await supabase
+    .from('jobs')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data as Job[]
+}
+
+export async function getJob(jobId: string): Promise<Job | null> {
+  const { data, error } = await supabase
+    .from('jobs')
+    .select('*')
+    .eq('id', jobId)
+    .maybeSingle()
+  if (error) throw error
+  return data as Job | null
+}
+
+export async function updateJob(jobId: string, patch: Partial<Job>): Promise<Job> {
+  const { data, error } = await supabase
+    .from('jobs')
+    .update(patch)
+    .eq('id', jobId)
+    .select('*')
+    .single()
+  if (error) throw error
+  return data as Job
+}
+
+export async function deleteJob(jobId: string): Promise<void> {
+  const { error } = await supabase.from('jobs').delete().eq('id', jobId)
+  if (error) throw error
+}
+
+export async function createJobWithFields(job: Omit<Job, 'id' | 'created_at'>, fields: Array<Omit<JobField, 'id' | 'job_id'>>): Promise<{ job: Job, fields: JobField[] }> {
+  const { data: jobRow, error: jobErr } = await supabase
+    .from('jobs')
+    .insert({
+      company: job.company,
+      role: job.role,
+      deadline: job.deadline,
+      min_ug_cgpa: job.min_ug_cgpa ?? null,
+    })
+    .select('*')
+    .single()
+  if (jobErr) throw jobErr
+
+  let createdFields: JobField[] = []
+  if (fields.length > 0) {
+    const { data: fieldRows, error: fieldErr } = await supabase
+      .from('job_fields')
+      .insert(fields.map(f => ({
+        job_id: jobRow.id,
+        key: f.key,
+        label: f.label,
+        type: f.type,
+        required: f.required,
+      })))
+      .select('*')
+    if (fieldErr) throw fieldErr
+    createdFields = fieldRows as JobField[]
+  }
+
+  return { job: jobRow as Job, fields: createdFields }
+}

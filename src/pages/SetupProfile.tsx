@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import SectionHeader from '../components/SectionHeader'
 import Card from '../components/Card'
 import Button from '../components/Button'
 import { useAuth } from '../lib/auth'
-import { getProfile, upsertProfile } from '../lib/profile'
+import { upsertProfile, getProfile } from '../lib/profile'
 
 type StudentForm = {
   id: string
@@ -25,45 +26,40 @@ type StudentForm = {
   year_of_passing: number | null
 }
 
-export default function Profile() {
+export default function SetupProfile() {
   const { user } = useAuth()
-  const [form, setForm] = useState<StudentForm | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
+
+  const [form, setForm] = useState<StudentForm | null>(null)
 
   useEffect(() => {
     let act = true
     async function load() {
       if (!user) return
-      try {
-        const existing = await getProfile(user.id)
-        if (!act) return
-        const base: StudentForm = {
-          id: user.id,
-          student_no: existing?.student_no ?? null,
-          name: existing?.name ?? '',
-          gender: existing?.gender ?? '',
-          email: existing?.email ?? (user.email ?? ''),
-          contact_no: existing?.contact_no ?? '',
-          department: existing?.department ?? '',
-          course: existing?.course ?? '',
-          date_of_birth: existing?.date_of_birth ?? '',
-          home_town: existing?.home_town ?? '',
-          languages_known: existing?.languages_known ?? '',
-          tenth_percent: existing?.tenth_percent ?? null,
-          twelfth_or_diploma_percent: existing?.twelfth_or_diploma_percent ?? null,
-          ug_cgpa: existing?.ug_cgpa ?? null,
-          pg_cgpa: existing?.pg_cgpa ?? null,
-          backlogs: existing?.backlogs ?? null,
-          year_of_passing: existing?.year_of_passing ?? null,
-        }
-        setForm(base)
-      } catch (e: any) {
-        setStatus(e.message || 'Failed to load profile')
-      } finally {
-        setLoading(false)
+      const existing = await getProfile(user.id).catch(() => null) as any
+      if (!act) return
+      const base: StudentForm = {
+        id: user.id,
+        student_no: existing?.student_no ?? null,
+        name: existing?.name ?? '',
+        gender: existing?.gender ?? '',
+        email: existing?.email ?? (user.email ?? ''),
+        contact_no: existing?.contact_no ?? '',
+        department: existing?.department ?? '',
+        course: existing?.course ?? '',
+        date_of_birth: existing?.date_of_birth ?? '',
+        home_town: existing?.home_town ?? '',
+        languages_known: existing?.languages_known ?? '',
+        tenth_percent: existing?.tenth_percent ?? null,
+        twelfth_or_diploma_percent: existing?.twelfth_or_diploma_percent ?? null,
+        ug_cgpa: existing?.ug_cgpa ?? null,
+        pg_cgpa: existing?.pg_cgpa ?? null,
+        backlogs: existing?.backlogs ?? null,
+        year_of_passing: existing?.year_of_passing ?? null,
       }
+      setForm(base)
     }
     load()
     return () => { act = false }
@@ -74,31 +70,33 @@ export default function Profile() {
     setForm({ ...form, [key]: value })
   }
 
-  async function handleSave(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form || !user) return
-    setSaving(true)
+    setLoading(true)
     setStatus(null)
     try {
       await upsertProfile(user.id, form as any)
-      setStatus('Saved')
+      // Mark as completed to avoid immediate redirect race
+      localStorage.setItem('profile-complete', '1')
+      navigate('/', { replace: true })
     } catch (err: any) {
-      setStatus(err.message || 'Failed to save')
+      setStatus(err.message || 'Failed to save profile')
     } finally {
-      setSaving(false)
+      setLoading(false)
     }
   }
 
-  if (loading || !form) return null
+  if (!form) return null
 
   return (
     <section className="section">
-      <SectionHeader title="Your Profile" subtitle="Edit and update your details anytime" />
+      <SectionHeader title="Complete your profile" subtitle="Provide the required details to proceed" />
       <Card>
-        <form onSubmit={handleSave} style={{ display: 'grid', gap: 12 }}>
+        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12 }}>
           <div className="field">
             <span className="p">No. (Auto-generated)</span>
-            <input className="input" value={form.student_no ?? ''} disabled />
+            <input className="input" value={form.student_no ?? ''} placeholder="Will be assigned automatically" disabled />
           </div>
           <div className="field">
             <span className="p">Name</span>
@@ -161,7 +159,7 @@ export default function Profile() {
             <input className="input" type="number" value={form.year_of_passing ?? ''} onChange={(e) => update('year_of_passing', e.target.value === '' ? null : Number(e.target.value))} required />
           </div>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'flex-end' }}>
-            <Button disabled={saving} type="submit">{saving ? 'Saving...' : 'Save changes'}</Button>
+            <Button disabled={loading} type="submit">{loading ? 'Saving...' : 'Save & Continue'}</Button>
             {status ? <span className="p" role="status">{status}</span> : null}
           </div>
         </form>

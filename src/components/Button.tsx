@@ -1,4 +1,6 @@
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+import type { ButtonHTMLAttributes } from 'react'
+
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'solid' | 'ghost'
 }
 
