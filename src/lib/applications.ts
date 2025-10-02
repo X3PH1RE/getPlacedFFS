@@ -12,6 +12,7 @@ export type ApplicationRow = {
   id: string
   job_id: string
   user_id: string
+  student_no: string | null
   name: string
   gender: string
   email: string
@@ -44,6 +45,7 @@ export async function applyToJob(jobId: string, userId: string) {
     await supabase.from('application_rows').insert({
       job_id: jobId,
       user_id: userId,
+      student_no: profile.student_no,
       name: profile.name,
       gender: profile.gender,
       email: profile.email,
@@ -85,27 +87,23 @@ export async function listApplicationRows(jobId: string): Promise<ApplicationRow
 }
 
 export async function listApplicationsWithProfiles(jobId: string): Promise<ApplicationRow[]> {
-  // 1) Fetch applications for the job
   const { data: apps, error } = await supabase
     .from('applications')
     .select('id, job_id, user_id, created_at')
     .eq('job_id', jobId)
-    .order('created_at', { ascending: true })
   if (error) throw error
   const applications = apps ?? []
   if (applications.length === 0) return []
 
   const userIds = Array.from(new Set(applications.map(a => a.user_id)))
 
-  // 2) Fetch student profiles in one go
   const { data: profiles, error: profErr } = await supabase
     .from('students')
-    .select('id, name, gender, email, contact_no, department, course, date_of_birth, home_town, languages_known, tenth_percent, twelfth_or_diploma_percent, ug_cgpa, pg_cgpa, backlogs, year_of_passing')
+    .select('id, student_no, name, gender, email, contact_no, department, course, date_of_birth, home_town, languages_known, tenth_percent, twelfth_or_diploma_percent, ug_cgpa, pg_cgpa, backlogs, year_of_passing')
     .in('id', userIds)
   if (profErr) throw profErr
   const idToProfile = new Map((profiles ?? []).map((p: any) => [p.id, p]))
 
-  // 3) Join
   return applications.map(a => {
     const p = idToProfile.get(a.user_id) || {}
     return {
@@ -113,6 +111,7 @@ export async function listApplicationsWithProfiles(jobId: string): Promise<Appli
       job_id: a.job_id,
       user_id: a.user_id,
       created_at: a.created_at,
+      student_no: p.student_no ?? null,
       name: p.name ?? '',
       gender: p.gender ?? '',
       email: p.email ?? '',
