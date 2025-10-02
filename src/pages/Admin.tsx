@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import SectionHeader from '../components/SectionHeader'
 import Card from '../components/Card'
 import Button from '../components/Button'
 import { deleteJob, listJobs, type Job } from '../lib/jobs'
-import { listApplicationRows } from '../lib/applications'
+import { listApplicationsWithProfiles } from '../lib/applications'
 import { formatDate } from '../lib/date'
+import { supabase } from '../lib/supabaseClient'
 
 export default function Admin() {
   const [jobs, setJobs] = useState<Job[]>([])
@@ -14,6 +15,7 @@ export default function Admin() {
   const [status, setStatus] = useState<string | null>(null)
   const [applicantsByJob, setApplicantsByJob] = useState<Record<string, any[]>>({})
   const [loadingApplicants, setLoadingApplicants] = useState<Record<string, boolean>>({})
+  const subscriptionsRef = useRef<Record<string, ReturnType<typeof supabase.channel> | null>>({})
   const navigate = useNavigate()
 
   const baseUrl = useMemo(() => window.location.origin, [])
@@ -30,7 +32,11 @@ export default function Admin() {
       }
     }
     load()
-    return () => { act = false }
+    return () => {
+      act = false
+      Object.values(subscriptionsRef.current).forEach((ch) => { if (ch) supabase.removeChannel(ch) })
+      subscriptionsRef.current = {}
+    }
   }, [])
 
   async function handleDelete(jobId: string) {
@@ -44,15 +50,26 @@ export default function Admin() {
     setTimeout(() => setStatus(null), 1200)
   }
 
-  async function ensureApplicantsLoaded(jobId: string) {
-    if (applicantsByJob[jobId] || loadingApplicants[jobId]) return
+  async function fetchApplicants(jobId: string) {
     setLoadingApplicants(prev => ({ ...prev, [jobId]: true }))
     try {
-      const rows = await listApplicationRows(jobId)
+      const rows = await listApplicationsWithProfiles(jobId)
       setApplicantsByJob(prev => ({ ...prev, [jobId]: rows }))
     } finally {
       setLoadingApplicants(prev => ({ ...prev, [jobId]: false }))
     }
+  }
+
+  function ensureSubscribed(jobId: string) {
+    if (subscriptionsRef.current[jobId]) return
+    const channel = supabase
+      .channel(`admin-applications-${jobId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'applications', filter: `job_id=eq.${jobId}` }, () => {
+        // Refetch join to include profile data
+        fetchApplicants(jobId)
+      })
+      .subscribe()
+    subscriptionsRef.current[jobId] = channel
   }
 
   async function handleToggle(jobId: string) {
@@ -60,7 +77,8 @@ export default function Admin() {
     const next = !isOpen
     setExpanded(prev => ({ ...prev, [jobId]: next }))
     if (next) {
-      await ensureApplicantsLoaded(jobId)
+      ensureSubscribed(jobId)
+      await fetchApplicants(jobId)
     }
   }
 
@@ -87,9 +105,9 @@ export default function Admin() {
 
   async function handleExport(job: Job) {
     try {
-      const raw = applicantsByJob[job.id] || await listApplicationRows(job.id)
+      await fetchApplicants(job.id)
+      const raw = applicantsByJob[job.id] || []
       const rows = formatExportRows(raw)
-      // dynamic import to avoid bundling error if xlsx missing
       // @ts-ignore
       const XLSX = (await import('xlsx')).default || (await import('xlsx'))
       const worksheet = XLSX.utils.json_to_sheet(rows, { header: [
