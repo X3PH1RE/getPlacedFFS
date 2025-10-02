@@ -5,6 +5,7 @@ import Card from '../components/Card'
 import Button from '../components/Button'
 import { deleteJob, listJobs, type Job } from '../lib/jobs'
 import { listApplicationRows } from '../lib/applications'
+import { formatDate } from '../lib/date'
 
 export default function Admin() {
   const [jobs, setJobs] = useState<Job[]>([])
@@ -64,7 +65,6 @@ export default function Admin() {
   }
 
   function formatExportRows(rows: any[]) {
-    // Exact header order required
     return rows.map(r => ({
       'No.': r.student_no ?? '',
       'Name': r.name ?? '',
@@ -73,7 +73,7 @@ export default function Admin() {
       'Contact No.': r.contact_no ?? '',
       'School/ Department': r.department ?? '',
       'Course': r.course ?? '',
-      'Date of Birth': r.date_of_birth ?? '',
+      'Date of Birth': formatDate(r.date_of_birth ?? ''),
       'Home town': r.home_town ?? '',
       'Languages known': r.languages_known ?? '',
       '10th %': r.tenth_percent ?? '',
@@ -125,7 +125,7 @@ export default function Admin() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
                     <div className="h1">{j.company} — {j.role}</div>
-                    <div className="p">Deadline: {j.deadline} {j.min_ug_cgpa != null ? `• Min UG CGPA: ${j.min_ug_cgpa}` : ''}</div>
+                    <div className="p">Deadline: {formatDate(j.deadline)} {j.min_ug_cgpa != null ? `• Min UG CGPA: ${j.min_ug_cgpa}` : ''}</div>
                   </div>
                   <Button variant="ghost" onClick={() => handleToggle(j.id)}>{isOpen ? 'Collapse' : 'Expand'}</Button>
                 </div>
@@ -152,7 +152,7 @@ export default function Admin() {
                                 <td style={{ padding: 8 }}>{r.contact_no}</td>
                                 <td style={{ padding: 8 }}>{r.department}</td>
                                 <td style={{ padding: 8 }}>{r.course}</td>
-                                <td style={{ padding: 8 }}>{r.date_of_birth}</td>
+                                <td style={{ padding: 8 }}>{formatDate(r.date_of_birth)}</td>
                                 <td style={{ padding: 8 }}>{r.home_town}</td>
                                 <td style={{ padding: 8 }}>{r.languages_known}</td>
                                 <td style={{ padding: 8 }}>{r.tenth_percent ?? ''}</td>

@@ -6,6 +6,7 @@ import { listJobs, type Job } from '../lib/jobs'
 import { useAuth } from '../lib/auth'
 import { applyToJob, listAppliedJobIds } from '../lib/applications'
 import { Link } from 'react-router-dom'
+import { formatDate } from '../lib/date'
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -54,7 +55,7 @@ export default function Dashboard() {
           {jobs.map((j) => (
             <Card key={j.id}>
               <div style={{ fontWeight: 700, marginBottom: 4 }}>{j.company} — {j.role}</div>
-              <div className="p">Deadline: {j.deadline} {j.min_ug_cgpa != null ? `• Min UG CGPA: ${j.min_ug_cgpa}` : ''}</div>
+              <div className="p">Deadline: {formatDate(j.deadline)} {j.min_ug_cgpa != null ? `• Min UG CGPA: ${j.min_ug_cgpa}` : ''}</div>
               <div style={{ height: 12 }} />
               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 {applied.includes(j.id) ? (
@@ -62,11 +63,7 @@ export default function Dashboard() {
                 ) : (
                   <Button onClick={() => onApply(j.id)}>Apply</Button>
                 )}
-                {j.sheet_url ? (
-                  <a className="link" href={j.sheet_url} target="_blank" rel="noreferrer">Open sheet</a>
-                ) : (
-                  <Link className="link" to={`/public/job/${j.id}`}>View applicants</Link>
-                )}
+                <Link className="link" to={`/public/job/${j.id}`}>View applicants</Link>
               </div>
             </Card>
           ))}

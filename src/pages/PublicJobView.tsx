@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { listApplicationsWithProfiles } from '../lib/applications'
 import { supabase } from '../lib/supabaseClient'
+import { formatDate } from '../lib/date'
 
 export default function PublicJobView() {
   const { jobId } = useParams()
@@ -60,7 +61,7 @@ export default function PublicJobView() {
                 <td style={{ padding: 8 }}>{r.contact_no}</td>
                 <td style={{ padding: 8 }}>{r.department}</td>
                 <td style={{ padding: 8 }}>{r.course}</td>
-                <td style={{ padding: 8 }}>{r.date_of_birth}</td>
+                <td style={{ padding: 8 }}>{formatDate(r.date_of_birth)}</td>
                 <td style={{ padding: 8 }}>{r.home_town}</td>
                 <td style={{ padding: 8 }}>{r.languages_known}</td>
                 <td style={{ padding: 8 }}>{r.tenth_percent ?? ''}</td>

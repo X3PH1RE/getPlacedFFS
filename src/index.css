@@ -20,10 +20,9 @@ body {
   margin: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   color: var(--text);
-  background:
-    radial-gradient(900px 600px at 20% -10%, rgba(120,166,255,0.2), transparent 60%),
-    radial-gradient(1000px 700px at 80% -20%, rgba(100,64,255,0.15), transparent 60%),
-    linear-gradient(180deg, #0a0f25 0%, var(--bg) 60%);
+  /* Consistent blue hue background */
+  background: linear-gradient(180deg, #0b1538 0%, #0f1b4f 100%);
+  background-attachment: fixed;
 }
 
 /* Layout */
@@ -31,7 +30,7 @@ body {
 .page-center { min-height: calc(100vh - 120px); display: grid; place-items: center; padding: 24px 16px; }
 
 /* Header */
-.header { position: sticky; top: 0; z-index: 10; background: rgba(6,11,27,0.6); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.header { position: sticky; top: 0; z-index: 10; background: rgba(11,21,56,0.65); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.06); }
 .header-inner { display: flex; align-items: center; justify-content: space-between; max-width: 960px; margin: 0 auto; padding: 14px 16px; }
 .brand { font-weight: 800; letter-spacing: 0.2px; color: var(--text); }
 .nav a { margin-left: 14px; color: var(--muted); text-decoration: none; font-size: 14px; padding: 8px 10px; border-radius: 10px; transition: color .2s ease, background .2s ease; }
@@ -46,13 +45,7 @@ body {
 .muted { color: var(--muted); }
 
 /* Components */
-.card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: var(--radius);
-  padding: 20px;
-  box-shadow: var(--shadow-sm);
-}
+.card { background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm); }
 .card:hover { box-shadow: var(--shadow-md); transition: box-shadow .35s ease; }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 16px; border-radius: 12px; border: 1px solid transparent; background: var(--primary); color: #030712; font-weight: 700; font-size: 14px; cursor: pointer; }
@@ -66,14 +59,7 @@ body {
 
 /* Inputs */
 .field { display: grid; gap: 6px; }
-.input {
-  height: 46px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  padding: 0 14px;
-  background: rgba(255,255,255,0.03);
-  color: var(--text);
-}
+.input { height: 46px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); padding: 0 14px; background: rgba(255,255,255,0.03); color: var(--text); }
 .input::placeholder { color: rgba(233,236,245,0.6); }
 .input:focus { outline: 2px solid var(--ring); outline-offset: 2px; border-color: transparent; background: rgba(255,255,255,0.06); }
 
@@ -90,3 +76,23 @@ body {
 /* Spinner */
 @keyframes spin { to { transform: rotate(360deg) } }
 .spinner { width: 16px; height: 16px; border-radius: 999px; border: 2px solid rgba(255,255,255,0.35); border-top-color: rgba(255,255,255,0.95); animation: spin 1s linear infinite; }
+
+/* Tables */
+.table th, .table td { padding: 8px; }
+
+/* Responsive tweaks */
+@media (max-width: 640px) {
+  .container { padding: 20px 12px; }
+  .header-inner { padding: 10px 12px; }
+  .brand { font-size: 18px; }
+  .nav a { margin-left: 8px; padding: 6px 8px; font-size: 13px; }
+  .h1 { font-size: 20px; }
+  .h2 { font-size: 14px; }
+  .p { font-size: 13px; }
+  .card { padding: 14px; }
+  .btn { height: 38px; padding: 0 12px; font-size: 13px; }
+  .input { height: 42px; padding: 0 12px; }
+  .auth-card { padding: 20px; border-radius: 14px; }
+  table th, table td { padding: 6px !important; }
+  .section { gap: 8px; }
+}

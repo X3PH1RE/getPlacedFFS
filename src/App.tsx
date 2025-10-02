@@ -6,7 +6,7 @@ function App() {
   const { user, signOut } = useAuth()
 
   return (
-    <div style={{minHeight: '100vh', display: 'flex', flexDirection: 'column'}}>
+    <div style={{minHeight: '100dvh', display: 'flex', flexDirection: 'column'}}>
       <header className="header">
         <div className="header-inner">
           <Link to="/" className="brand">getPlacedFFS</Link>
