@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
-import SectionHeader from '../components/SectionHeader'
-import Card from '../components/Card'
 import Button from '../components/Button'
 import { useAuth } from '../lib/auth'
 

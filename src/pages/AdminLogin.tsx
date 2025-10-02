@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
-import SectionHeader from '../components/SectionHeader'
 import { useAdminAuth } from '../lib/adminAuth'
 
 export default function AdminLogin() {
