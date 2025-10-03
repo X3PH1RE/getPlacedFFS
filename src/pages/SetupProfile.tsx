@@ -38,28 +38,53 @@ export default function SetupProfile() {
     let act = true
     async function load() {
       if (!user) return
-      const existing = await getProfile(user.id).catch(() => null) as any
-      if (!act) return
-      const base: StudentForm = {
-        id: user.id,
-        student_no: existing?.student_no ?? null,
-        name: existing?.name ?? '',
-        gender: existing?.gender ?? '',
-        email: existing?.email ?? (user.email ?? ''),
-        contact_no: existing?.contact_no ?? '',
-        department: existing?.department ?? '',
-        course: existing?.course ?? '',
-        date_of_birth: existing?.date_of_birth ?? '',
-        home_town: existing?.home_town ?? '',
-        languages_known: existing?.languages_known ?? '',
-        tenth_percent: existing?.tenth_percent ?? null,
-        twelfth_or_diploma_percent: existing?.twelfth_or_diploma_percent ?? null,
-        ug_cgpa: existing?.ug_cgpa ?? null,
-        pg_cgpa: existing?.pg_cgpa ?? null,
-        backlogs: existing?.backlogs ?? null,
-        year_of_passing: existing?.year_of_passing ?? null,
+      try {
+        const existing = await getProfile(user.id)
+        if (!act) return
+        const base: StudentForm = {
+          id: user.id,
+          student_no: existing?.student_no ?? null,
+          name: existing?.name ?? '',
+          gender: existing?.gender ?? '',
+          email: existing?.email ?? (user.email ?? ''),
+          contact_no: existing?.contact_no ?? '',
+          department: existing?.department ?? '',
+          course: existing?.course ?? '',
+          date_of_birth: existing?.date_of_birth ?? '',
+          home_town: existing?.home_town ?? '',
+          languages_known: existing?.languages_known ?? '',
+          tenth_percent: existing?.tenth_percent ?? null,
+          twelfth_or_diploma_percent: existing?.twelfth_or_diploma_percent ?? null,
+          ug_cgpa: existing?.ug_cgpa ?? null,
+          pg_cgpa: existing?.pg_cgpa ?? null,
+          backlogs: existing?.backlogs ?? null,
+          year_of_passing: existing?.year_of_passing ?? null,
+        }
+        setForm(base)
+      } catch (e) {
+        // If no profile exists, create a new one with user email
+        if (!act) return
+        const base: StudentForm = {
+          id: user.id,
+          student_no: null,
+          name: '',
+          gender: '',
+          email: user.email ?? '',
+          contact_no: '',
+          department: '',
+          course: '',
+          date_of_birth: '',
+          home_town: '',
+          languages_known: '',
+          tenth_percent: null,
+          twelfth_or_diploma_percent: null,
+          ug_cgpa: null,
+          pg_cgpa: null,
+          backlogs: null,
+          year_of_passing: null,
+        }
+        setForm(base)
       }
-      setForm(base)
     }
     load()
     return () => { act = false }

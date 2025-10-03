@@ -25,7 +25,21 @@ function App() {
       <main className="container" style={{ flex: 1 }}>
         <Outlet />
       </main>
-      <footer className="footer">© {new Date().getFullYear()} getPlacedFFS</footer>
+      <footer className="footer">
+        <div>© {new Date().getFullYear()} getPlacedFFS</div>
+        <div style={{ marginTop: 8, fontSize: '14px', color: 'var(--muted)' }}>
+          If any issues with the app,{' '}
+          <a 
+            href="https://wa.me/917400391105" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ color: 'var(--primary)', textDecoration: 'none' }}
+          >
+            whatsapp cheytha mathi
+          </a>
+          , call cheyyalle pls😊🙏
+        </div>
+      </footer>
     </div>
   )
 }

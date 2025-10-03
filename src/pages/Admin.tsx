@@ -8,6 +8,27 @@ import { listApplicationsWithProfiles } from '../lib/applications'
 import { formatDate } from '../lib/date'
 import { supabase } from '../lib/supabaseClient'
 
+type Student = {
+  id: string
+  student_no: string | null
+  name: string
+  gender: string
+  email: string
+  contact_no: string
+  department: string
+  course: string
+  date_of_birth: string
+  home_town: string
+  languages_known: string
+  tenth_percent: number | null
+  twelfth_or_diploma_percent: number | null
+  ug_cgpa: number | null
+  pg_cgpa: number | null
+  backlogs: number | null
+  year_of_passing: number | null
+  created_at: string
+}
+
 export default function Admin() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loadingJobs, setLoadingJobs] = useState(true)
@@ -15,6 +36,9 @@ export default function Admin() {
   const [status, setStatus] = useState<string | null>(null)
   const [applicantsByJob, setApplicantsByJob] = useState<Record<string, any[]>>({})
   const [loadingApplicants, setLoadingApplicants] = useState<Record<string, boolean>>({})
+  const [students, setStudents] = useState<Student[]>([])
+  const [loadingStudents, setLoadingStudents] = useState(false)
+  const [activeTab, setActiveTab] = useState<'jobs' | 'students'>('jobs')
   const subscriptionsRef = useRef<Record<string, ReturnType<typeof supabase.channel> | null>>({})
   const navigate = useNavigate()
 
@@ -103,6 +127,22 @@ export default function Admin() {
     }))
   }
 
+  async function fetchStudents() {
+    setLoadingStudents(true)
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setStudents(data as Student[])
+    } catch (e: any) {
+      setStatus(e.message || 'Failed to load students')
+    } finally {
+      setLoadingStudents(false)
+    }
+  }
+
   async function handleExport(job: Job) {
     try {
       await fetchApplicants(job.id)
@@ -123,82 +163,187 @@ export default function Admin() {
     }
   }
 
+  async function handleExportAllStudents() {
+    try {
+      const rows = students.map(s => ({
+        'No.': s.student_no ?? '',
+        'Name': s.name ?? '',
+        'Gender': s.gender ?? '',
+        'Email': s.email ?? '',
+        'Contact No.': s.contact_no ?? '',
+        'School/ Department': s.department ?? '',
+        'Course': s.course ?? '',
+        'Date of Birth': formatDate(s.date_of_birth ?? ''),
+        'Home town': s.home_town ?? '',
+        'Languages known': s.languages_known ?? '',
+        '10th %': s.tenth_percent ?? '',
+        '12th/ Diploma %': s.twelfth_or_diploma_percent ?? '',
+        'UG CGPA': s.ug_cgpa ?? '',
+        'PG CGPA': s.pg_cgpa ?? '',
+        'Backlogs': s.backlogs ?? '',
+        'Year of passing': s.year_of_passing ?? '',
+      }))
+      // @ts-ignore
+      const XLSX = (await import('xlsx')).default || (await import('xlsx'))
+      const worksheet = XLSX.utils.json_to_sheet(rows, { header: [
+        'No.','Name','Gender','Email','Contact No.','School/ Department','Course','Date of Birth','Home town','Languages known','10th %','12th/ Diploma %','UG CGPA','PG CGPA','Backlogs','Year of passing'
+      ] })
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'All Students')
+      const filename = `All_Students_IT27_${new Date().toISOString().split('T')[0]}.xlsx`
+      XLSX.writeFile(workbook, filename)
+    } catch (e: any) {
+      setStatus(e.message || 'Export failed (install xlsx)')
+      setTimeout(() => setStatus(null), 1500)
+    }
+  }
+
   return (
     <section className="section">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <SectionHeader title="Admin — Jobs" subtitle="View and manage existing jobs" />
-        <Link to="/admin/create" className="link">+ New Job</Link>
+        <SectionHeader title="Admin Dashboard" subtitle="Manage jobs and view all students" />
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div className="tabs">
+            <button 
+              className={["tab", activeTab === 'jobs' ? 'tab-active' : ''].join(' ')} 
+              onClick={() => setActiveTab('jobs')}
+            >
+              Jobs
+            </button>
+            <button 
+              className={["tab", activeTab === 'students' ? 'tab-active' : ''].join(' ')} 
+              onClick={() => {
+                setActiveTab('students')
+                if (students.length === 0) fetchStudents()
+              }}
+            >
+              Students
+            </button>
+          </div>
+          {activeTab === 'jobs' && <Link to="/admin/create" className="link">+ New Job</Link>}
+        </div>
       </div>
 
       {status ? <div className="p" role="status">{status}</div> : null}
 
-      {loadingJobs ? null : (
-        <div style={{ display: 'grid', gap: 12 }}>
-          {jobs.map(j => {
-            const isOpen = !!expanded[j.id]
-            const applicants = applicantsByJob[j.id] || []
-            const isLoading = !!loadingApplicants[j.id]
-            return (
-              <div key={j.id} className="card">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div>
-                    <div className="h1">{j.company} — {j.role}</div>
-                    <div className="p">Deadline: {formatDate(j.deadline)} {j.min_ug_cgpa != null ? `• Min UG CGPA: ${j.min_ug_cgpa}` : ''}</div>
-                  </div>
-                  <Button variant="ghost" onClick={() => handleToggle(j.id)}>{isOpen ? 'Collapse' : 'Expand'}</Button>
-                </div>
-                {isOpen ? (
-                  <div style={{ marginTop: 10, display: 'grid', gap: 10 }}>
-                    <div className="p">Applicants: {isLoading ? 'Loading...' : applicants.length}</div>
-                    {!isLoading && applicants.length > 0 ? (
-                      <div className="card" style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                          <thead>
-                            <tr>
-                              {['No.','Name','Gender','Email','Contact No.','School/ Department','Course','Date of Birth','Home town','Languages known','10th %','12th/ Diploma %','UG CGPA','PG CGPA','Backlogs','Year of passing'].map((h) => (
-                                <th key={h} style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {applicants.map((r: any) => (
-                              <tr key={r.id}>
-                                <td style={{ padding: 8 }}>{r.student_no ?? ''}</td>
-                                <td style={{ padding: 8 }}>{r.name}</td>
-                                <td style={{ padding: 8 }}>{r.gender}</td>
-                                <td style={{ padding: 8 }}>{r.email}</td>
-                                <td style={{ padding: 8 }}>{r.contact_no}</td>
-                                <td style={{ padding: 8 }}>{r.department}</td>
-                                <td style={{ padding: 8 }}>{r.course}</td>
-                                <td style={{ padding: 8 }}>{formatDate(r.date_of_birth)}</td>
-                                <td style={{ padding: 8 }}>{r.home_town}</td>
-                                <td style={{ padding: 8 }}>{r.languages_known}</td>
-                                <td style={{ padding: 8 }}>{r.tenth_percent ?? ''}</td>
-                                <td style={{ padding: 8 }}>{r.twelfth_or_diploma_percent ?? ''}</td>
-                                <td style={{ padding: 8 }}>{r.ug_cgpa ?? ''}</td>
-                                <td style={{ padding: 8 }}>{r.pg_cgpa ?? ''}</td>
-                                <td style={{ padding: 8 }}>{r.backlogs ?? ''}</td>
-                                <td style={{ padding: 8 }}>{r.year_of_passing ?? ''}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : null}
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <Button variant="ghost" onClick={() => navigate(`/admin/create`)} disabled>Duplicate (coming soon)</Button>
-                      <Button variant="ghost" onClick={() => navigate(`/admin/edit/${j.id}`)}>Edit</Button>
-                      <Button variant="ghost" onClick={() => handleExport(j)}>Export XLSX</Button>
-                      <Button variant="ghost" onClick={() => copyPublicLink(j.id)}>Copy public link</Button>
-                      <Link className="link" to={`/public/job/${j.id}`}>Open public view</Link>
-                      <Button variant="ghost" onClick={() => handleDelete(j.id)}>Delete</Button>
+      {activeTab === 'jobs' ? (
+        loadingJobs ? null : (
+          <div style={{ display: 'grid', gap: 12 }}>
+            {jobs.map(j => {
+              const isOpen = !!expanded[j.id]
+              const applicants = applicantsByJob[j.id] || []
+              const isLoading = !!loadingApplicants[j.id]
+              return (
+                <div key={j.id} className="card">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <div className="h1">{j.company} — {j.role}</div>
+                      <div className="p">Deadline: {formatDate(j.deadline)} {j.min_ug_cgpa != null ? `• Min UG CGPA: ${j.min_ug_cgpa}` : ''}</div>
                     </div>
+                    <Button variant="ghost" onClick={() => handleToggle(j.id)}>{isOpen ? 'Collapse' : 'Expand'}</Button>
                   </div>
-                ) : null}
-              </div>
-            )
-          })}
-          {jobs.length === 0 ? <div className="p">No jobs yet.</div> : null}
+                  {isOpen ? (
+                    <div style={{ marginTop: 10, display: 'grid', gap: 10 }}>
+                      <div className="p">Applicants: {isLoading ? 'Loading...' : applicants.length}</div>
+                      {!isLoading && applicants.length > 0 ? (
+                        <div className="card" style={{ overflowX: 'auto' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                              <tr>
+                                {['No.','Name','Gender','Email','Contact No.','School/ Department','Course','Date of Birth','Home town','Languages known','10th %','12th/ Diploma %','UG CGPA','PG CGPA','Backlogs','Year of passing'].map((h) => (
+                                  <th key={h} style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {applicants.map((r: any) => (
+                                <tr key={r.id}>
+                                  <td style={{ padding: 8 }}>{r.student_no ?? ''}</td>
+                                  <td style={{ padding: 8 }}>{r.name}</td>
+                                  <td style={{ padding: 8 }}>{r.gender}</td>
+                                  <td style={{ padding: 8 }}>{r.email}</td>
+                                  <td style={{ padding: 8 }}>{r.contact_no}</td>
+                                  <td style={{ padding: 8 }}>{r.department}</td>
+                                  <td style={{ padding: 8 }}>{r.course}</td>
+                                  <td style={{ padding: 8 }}>{formatDate(r.date_of_birth)}</td>
+                                  <td style={{ padding: 8 }}>{r.home_town}</td>
+                                  <td style={{ padding: 8 }}>{r.languages_known}</td>
+                                  <td style={{ padding: 8 }}>{r.tenth_percent ?? ''}</td>
+                                  <td style={{ padding: 8 }}>{r.twelfth_or_diploma_percent ?? ''}</td>
+                                  <td style={{ padding: 8 }}>{r.ug_cgpa ?? ''}</td>
+                                  <td style={{ padding: 8 }}>{r.pg_cgpa ?? ''}</td>
+                                  <td style={{ padding: 8 }}>{r.backlogs ?? ''}</td>
+                                  <td style={{ padding: 8 }}>{r.year_of_passing ?? ''}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : null}
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <Button variant="ghost" onClick={() => navigate(`/admin/create`)} disabled>Duplicate (coming soon)</Button>
+                        <Button variant="ghost" onClick={() => navigate(`/admin/edit/${j.id}`)}>Edit</Button>
+                        <Button variant="ghost" onClick={() => handleExport(j)}>Export XLSX</Button>
+                        <Button variant="ghost" onClick={() => copyPublicLink(j.id)}>Copy public link</Button>
+                        <Link className="link" to={`/public/job/${j.id}`}>Open public view</Link>
+                        <Button variant="ghost" onClick={() => handleDelete(j.id)}>Delete</Button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )
+            })}
+            {jobs.length === 0 ? <div className="p">No jobs yet.</div> : null}
+          </div>
+        )
+      ) : (
+        <div style={{ display: 'grid', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="p">Total Students: {loadingStudents ? 'Loading...' : students.length}</div>
+            <Button variant="ghost" onClick={handleExportAllStudents} disabled={students.length === 0}>
+              Export All Students
+            </Button>
+          </div>
+          
+          {loadingStudents ? (
+            <div className="p">Loading students...</div>
+          ) : students.length > 0 ? (
+            <div className="card" style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    {['No.','Name','Gender','Email','Contact No.','School/ Department','Course','Date of Birth','Home town','Languages known','10th %','12th/ Diploma %','UG CGPA','PG CGPA','Backlogs','Year of passing'].map((h) => (
+                      <th key={h} style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((s) => (
+                    <tr key={s.id}>
+                      <td style={{ padding: 8 }}>{s.student_no ?? ''}</td>
+                      <td style={{ padding: 8 }}>{s.name}</td>
+                      <td style={{ padding: 8 }}>{s.gender}</td>
+                      <td style={{ padding: 8 }}>{s.email}</td>
+                      <td style={{ padding: 8 }}>{s.contact_no}</td>
+                      <td style={{ padding: 8 }}>{s.department}</td>
+                      <td style={{ padding: 8 }}>{s.course}</td>
+                      <td style={{ padding: 8 }}>{formatDate(s.date_of_birth)}</td>
+                      <td style={{ padding: 8 }}>{s.home_town}</td>
+                      <td style={{ padding: 8 }}>{s.languages_known}</td>
+                      <td style={{ padding: 8 }}>{s.tenth_percent ?? ''}</td>
+                      <td style={{ padding: 8 }}>{s.twelfth_or_diploma_percent ?? ''}</td>
+                      <td style={{ padding: 8 }}>{s.ug_cgpa ?? ''}</td>
+                      <td style={{ padding: 8 }}>{s.pg_cgpa ?? ''}</td>
+                      <td style={{ padding: 8 }}>{s.backlogs ?? ''}</td>
+                      <td style={{ padding: 8 }}>{s.year_of_passing ?? ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p">No students registered yet.</div>
+          )}
         </div>
       )}
     </section>
