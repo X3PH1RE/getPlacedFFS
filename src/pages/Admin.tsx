@@ -5,8 +5,9 @@ import Card from '../components/Card'
 import Button from '../components/Button'
 import { deleteJob, listJobs, type Job } from '../lib/jobs'
 import { listApplicationsWithProfiles } from '../lib/applications'
-import { formatDate } from '../lib/date'
+import { formatDate, formatDateTime } from '../lib/date'
 import { supabase } from '../lib/supabaseClient'
+import { useAdminAuth } from '../lib/adminAuth'
 
 type Student = {
   id: string
@@ -30,6 +31,7 @@ type Student = {
 }
 
 export default function Admin() {
+  const { logout } = useAdminAuth()
   const [jobs, setJobs] = useState<Job[]>([])
   const [loadingJobs, setLoadingJobs] = useState(true)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -224,7 +226,12 @@ export default function Admin() {
   return (
     <section className="section">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <SectionHeader title="Admin Dashboard" subtitle="Manage jobs and view all students" />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <SectionHeader title="Admin Dashboard" subtitle="Manage jobs and view all students" />
+          <Button variant="ghost" onClick={() => logout()} style={{ alignSelf: 'flex-start', fontSize: '12px', padding: '6px 12px' }}>
+            Sign out
+          </Button>
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'stretch' }}>
           <div className="tabs">
             <button 

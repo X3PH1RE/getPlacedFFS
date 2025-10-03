@@ -4,6 +4,7 @@ import Card from '../components/Card'
 import Button from '../components/Button'
 import { createJobWithFields, type JobField } from '../lib/jobs'
 import { useNavigate } from 'react-router-dom'
+import { useAdminAuth } from '../lib/adminAuth'
 
 function slugify(input: string) {
   return input
@@ -15,6 +16,7 @@ function slugify(input: string) {
 }
 
 export default function AdminCreateJob() {
+  const { logout } = useAdminAuth()
   const [company, setCompany] = useState('')
   const [role, setRole] = useState('')
   const [deadlineDate, setDeadlineDate] = useState('')
@@ -58,7 +60,12 @@ export default function AdminCreateJob() {
 
   return (
     <section className="section">
-      <SectionHeader title="Create new job" subtitle="Add core details and optional extra fields" />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <SectionHeader title="Create new job" subtitle="Add core details and optional extra fields" />
+        <Button variant="ghost" onClick={() => logout()} style={{ alignSelf: 'flex-start', fontSize: '12px', padding: '6px 12px' }}>
+          Sign out
+        </Button>
+      </div>
       <Card>
         <form onSubmit={handleCreate} style={{ display: 'grid', gap: 12 }}>
           <div className="field">

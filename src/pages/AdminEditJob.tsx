@@ -4,8 +4,10 @@ import SectionHeader from '../components/SectionHeader'
 import Card from '../components/Card'
 import Button from '../components/Button'
 import { getJob, updateJob } from '../lib/jobs'
+import { useAdminAuth } from '../lib/adminAuth'
 
 export default function AdminEditJob() {
+  const { logout } = useAdminAuth()
   const { jobId } = useParams()
   const navigate = useNavigate()
   const [company, setCompany] = useState('')
@@ -67,7 +69,12 @@ export default function AdminEditJob() {
 
   return (
     <section className="section">
-      <SectionHeader title="Edit job" />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <SectionHeader title="Edit job" />
+        <Button variant="ghost" onClick={() => logout()} style={{ alignSelf: 'flex-start', fontSize: '12px', padding: '6px 12px' }}>
+          Sign out
+        </Button>
+      </div>
       <Card>
         <form onSubmit={handleSave} style={{ display: 'grid', gap: 12 }}>
           <div className="field">
