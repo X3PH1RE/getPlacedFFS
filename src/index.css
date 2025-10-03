@@ -64,9 +64,56 @@ body {
 
 /* Inputs */
 .field { display: grid; gap: 6px; }
-.input { height: 46px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); padding: 0 14px; background: rgba(255,255,255,0.03); color: var(--text); }
+.input { height: 46px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); padding: 0 14px; background: rgba(255,255,255,0.03); color: var(--text); transition: all 0.2s ease; }
 .input::placeholder { color: rgba(233,236,245,0.6); }
 .input:focus { outline: 2px solid var(--ring); outline-offset: 2px; border-color: transparent; background: rgba(255,255,255,0.06); }
+.input:invalid { border-color: rgba(248,113,113,0.3); }
+.input:valid { border-color: rgba(110,231,183,0.3); }
+
+/* Password field container */
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field .input {
+  padding-right: 48px;
+}
+
+/* Password strength indicator */
+.password-strength {
+  margin-top: 4px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: fadeIn 0.3s ease;
+  font-weight: 500;
+}
+
+.password-strength.weak { color: #f87171; }
+.password-strength.medium { color: #fbbf24; }
+.password-strength.strong { color: #10b981; }
+
+.password-strength::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
 
 /* Tabs */
 .tabs { display: flex; gap: 8px; padding: 6px; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
@@ -176,8 +223,62 @@ body {
   .auth-card { max-height: 90vh; overflow-y: auto; }
 }
 
+/* Password toggle button */
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  opacity: 0.7;
+}
+
+.password-toggle:hover {
+  color: var(--primary);
+  background: rgba(120,166,255,0.1);
+  opacity: 1;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.password-toggle:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.password-toggle:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
 /* Touch targets - ensure minimum 44px for accessibility */
 @media (max-width: 768px) {
   .btn, .nav a, .tab { min-height: 44px; min-width: 44px; }
   .input { min-height: 44px; }
+  .password-toggle { 
+    min-height: 44px; 
+    min-width: 44px; 
+    font-size: 18px;
+  }
+  
+  /* Password field mobile improvements */
+  .password-field .input {
+    padding-right: 52px;
+  }
+  
+  .password-strength {
+    font-size: 11px;
+    margin-top: 6px;
+  }
 }
