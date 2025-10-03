@@ -183,9 +183,9 @@ export default function SetupProfile() {
             <span className="p">Year of Passing</span>
             <input className="input" type="number" value={form.year_of_passing ?? ''} onChange={(e) => update('year_of_passing', e.target.value === '' ? null : Number(e.target.value))} required />
           </div>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'flex-end' }}>
-            <Button disabled={loading} type="submit">{loading ? 'Saving...' : 'Save & Continue'}</Button>
-            {status ? <span className="p" role="status">{status}</span> : null}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'stretch' }}>
+            <Button disabled={loading} type="submit" style={{ alignSelf: 'flex-start' }}>{loading ? 'Saving...' : 'Save & Continue'}</Button>
+            {status ? <div className="p" role="status" style={{ textAlign: 'center', padding: '8px 12px', background: 'rgba(248,113,113,0.1)', borderRadius: '8px', border: '1px solid rgba(248,113,113,0.2)', color: 'var(--danger)' }}>{status}</div> : null}
           </div>
         </form>
       </Card>

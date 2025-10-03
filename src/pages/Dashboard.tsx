@@ -54,16 +54,23 @@ export default function Dashboard() {
           {error ? <div className="p" role="status">{error}</div> : null}
           {jobs.map((j) => (
             <Card key={j.id}>
-              <div style={{ fontWeight: 700, marginBottom: 4 }}>{j.company} — {j.role}</div>
-              <div className="p">Deadline: {formatDate(j.deadline)} {j.min_ug_cgpa != null ? `• Min UG CGPA: ${j.min_ug_cgpa}` : ''}</div>
-              <div style={{ height: 12 }} />
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                {applied.includes(j.id) ? (
-                  <span className="p">You have applied</span>
-                ) : (
-                  <Button onClick={() => onApply(j.id)}>Apply</Button>
-                )}
-                <Link className="link" to={`/public/job/${j.id}`}>View applicants</Link>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                  <div style={{ fontWeight: 700, marginBottom: 4, wordBreak: 'break-word' }}>{j.company} — {j.role}</div>
+                  <div className="p">Deadline: {formatDate(j.deadline)} {j.min_ug_cgpa != null ? `• Min UG CGPA: ${j.min_ug_cgpa}` : ''}</div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {applied.includes(j.id) ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(110,231,183,0.1)', borderRadius: '8px', border: '1px solid rgba(110,231,183,0.2)' }}>
+                      <span style={{ color: 'var(--success)', fontSize: '14px', fontWeight: '600' }}>✓ You have applied</span>
+                    </div>
+                  ) : (
+                    <Button onClick={() => onApply(j.id)} style={{ alignSelf: 'flex-start' }}>Apply</Button>
+                  )}
+                  <Link className="link" to={`/public/job/${j.id}`} style={{ alignSelf: 'flex-start', padding: '8px 12px', background: 'rgba(120,166,255,0.1)', borderRadius: '8px', border: '1px solid rgba(120,166,255,0.2)' }}>
+                    View applicants
+                  </Link>
+                </div>
               </div>
             </Card>
           ))}

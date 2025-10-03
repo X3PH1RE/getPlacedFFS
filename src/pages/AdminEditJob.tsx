@@ -78,10 +78,10 @@ export default function AdminEditJob() {
             <span className="p">Min UG CGPA (optional)</span>
             <input className="input" type="number" step="0.01" value={minCgpa} onChange={(e) => setMinCgpa(e.target.value)} />
           </div>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <Button disabled={saving} type="submit">{saving ? 'Saving...' : 'Save changes'}</Button>
-            {status ? <span className="p" role="status">{status}</span> : null}
-          </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'stretch' }}>
+                    <Button disabled={saving} type="submit" style={{ alignSelf: 'flex-start' }}>{saving ? 'Saving...' : 'Save changes'}</Button>
+                    {status ? <div className="p" role="status" style={{ textAlign: 'center', padding: '8px 12px', background: 'rgba(248,113,113,0.1)', borderRadius: '8px', border: '1px solid rgba(248,113,113,0.2)', color: 'var(--danger)' }}>{status}</div> : null}
+                  </div>
         </form>
       </Card>
     </section>

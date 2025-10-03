@@ -200,9 +200,9 @@ export default function Admin() {
 
   return (
     <section className="section">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <SectionHeader title="Admin Dashboard" subtitle="Manage jobs and view all students" />
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'stretch' }}>
           <div className="tabs">
             <button 
               className={["tab", activeTab === 'jobs' ? 'tab-active' : ''].join(' ')} 
@@ -220,7 +220,11 @@ export default function Admin() {
               Students
             </button>
           </div>
-          {activeTab === 'jobs' && <Link to="/admin/create" className="link">+ New Job</Link>}
+          {activeTab === 'jobs' && (
+            <Link to="/admin/create" className="link" style={{ alignSelf: 'flex-start', padding: '8px 12px', background: 'rgba(120,166,255,0.1)', borderRadius: '8px', border: '1px solid rgba(120,166,255,0.2)' }}>
+              + New Job
+            </Link>
+          )}
         </div>
       </div>
 
@@ -235,12 +239,16 @@ export default function Admin() {
               const isLoading = !!loadingApplicants[j.id]
               return (
                 <div key={j.id} className="card">
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                      <div className="h1">{j.company} — {j.role}</div>
-                      <div className="p">Deadline: {formatDate(j.deadline)} {j.min_ug_cgpa != null ? `• Min UG CGPA: ${j.min_ug_cgpa}` : ''}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="h1" style={{ wordBreak: 'break-word' }}>{j.company} — {j.role}</div>
+                        <div className="p">Deadline: {formatDate(j.deadline)} {j.min_ug_cgpa != null ? `• Min UG CGPA: ${j.min_ug_cgpa}` : ''}</div>
+                      </div>
+                      <Button variant="ghost" onClick={() => handleToggle(j.id)} style={{ flexShrink: 0, fontSize: '12px', padding: '6px 8px' }}>
+                        {isOpen ? 'Collapse' : 'Expand'}
+                      </Button>
                     </div>
-                    <Button variant="ghost" onClick={() => handleToggle(j.id)}>{isOpen ? 'Collapse' : 'Expand'}</Button>
                   </div>
                   {isOpen ? (
                     <div style={{ marginTop: 10, display: 'grid', gap: 10 }}>
@@ -280,13 +288,13 @@ export default function Admin() {
                           </table>
                         </div>
                       ) : null}
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        <Button variant="ghost" onClick={() => navigate(`/admin/create`)} disabled>Duplicate (coming soon)</Button>
-                        <Button variant="ghost" onClick={() => navigate(`/admin/edit/${j.id}`)}>Edit</Button>
-                        <Button variant="ghost" onClick={() => handleExport(j)}>Export XLSX</Button>
-                        <Button variant="ghost" onClick={() => copyPublicLink(j.id)}>Copy public link</Button>
-                        <Link className="link" to={`/public/job/${j.id}`}>Open public view</Link>
-                        <Button variant="ghost" onClick={() => handleDelete(j.id)}>Delete</Button>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8 }}>
+                        <Button variant="ghost" onClick={() => navigate(`/admin/create`)} disabled style={{ fontSize: '11px', padding: '6px 8px' }}>Duplicate</Button>
+                        <Button variant="ghost" onClick={() => navigate(`/admin/edit/${j.id}`)} style={{ fontSize: '11px', padding: '6px 8px' }}>Edit</Button>
+                        <Button variant="ghost" onClick={() => handleExport(j)} style={{ fontSize: '11px', padding: '6px 8px' }}>Export</Button>
+                        <Button variant="ghost" onClick={() => copyPublicLink(j.id)} style={{ fontSize: '11px', padding: '6px 8px' }}>Copy Link</Button>
+                        <Link className="link" to={`/public/job/${j.id}`} style={{ fontSize: '11px', padding: '6px 8px', textAlign: 'center', background: 'rgba(120,166,255,0.1)', borderRadius: '6px', border: '1px solid rgba(120,166,255,0.2)' }}>View</Link>
+                        <Button variant="ghost" onClick={() => handleDelete(j.id)} style={{ fontSize: '11px', padding: '6px 8px', color: 'var(--danger)' }}>Delete</Button>
                       </div>
                     </div>
                   ) : null}
@@ -298,9 +306,9 @@ export default function Admin() {
         )
       ) : (
         <div style={{ display: 'grid', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div className="p">Total Students: {loadingStudents ? 'Loading...' : students.length}</div>
-            <Button variant="ghost" onClick={handleExportAllStudents} disabled={students.length === 0}>
+            <Button variant="ghost" onClick={handleExportAllStudents} disabled={students.length === 0} style={{ alignSelf: 'flex-start', fontSize: '12px', padding: '8px 12px' }}>
               Export All Students
             </Button>
           </div>

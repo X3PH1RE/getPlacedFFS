@@ -89,12 +89,12 @@ export default function Login() {
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             />
           </label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Button disabled={loading} type="submit">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'stretch' }}>
+            <Button disabled={loading} type="submit" style={{ alignSelf: 'flex-start' }}>
               {loading ? <span className="spinner" aria-hidden /> : null}
               {loading ? (mode === 'login' ? 'Signing in...' : 'Creating account...') : (mode === 'login' ? 'Sign in' : 'Sign up')}
             </Button>
-            {status ? <span className="p" role="status">{status}</span> : null}
+            {status ? <div className="p" role="status" style={{ textAlign: 'center', padding: '8px 12px', background: 'rgba(248,113,113,0.1)', borderRadius: '8px', border: '1px solid rgba(248,113,113,0.2)', color: 'var(--danger)' }}>{status}</div> : null}
           </div>
         </form>
         <div className="divider" />

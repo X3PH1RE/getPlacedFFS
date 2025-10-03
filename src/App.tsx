@@ -14,10 +14,10 @@ function App() {
             <NavLink to="/" end style={({ isActive }) => ({ color: isActive ? 'var(--text)' : undefined, background: isActive ? 'rgba(255,255,255,0.06)' : undefined })}>Dashboard</NavLink>
             <NavLink to="/profile" style={({ isActive }) => ({ color: isActive ? 'var(--text)' : undefined, background: isActive ? 'rgba(255,255,255,0.06)' : undefined })}>Profile</NavLink>
             {user ? (
-              <span style={{ marginLeft: 12 }}>
-                <span className="p" style={{ marginRight: 8 }}>{user.email ?? user.id}</span>
-                <Button variant="ghost" onClick={() => signOut()}>Sign out</Button>
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span className="p" style={{ fontSize: '12px', display: 'none' }}>{user.email ?? user.id}</span>
+                <Button variant="ghost" onClick={() => signOut()} style={{ fontSize: '12px', padding: '6px 8px' }}>Sign out</Button>
+              </div>
             ) : null}
           </nav>
         </div>

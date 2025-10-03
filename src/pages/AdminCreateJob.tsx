@@ -89,10 +89,10 @@ export default function AdminCreateJob() {
               </div>
             </div>
           ))}
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <Button type="button" variant="ghost" onClick={addField}>+ Add field</Button>
-            <Button disabled={loading} type="submit">{loading ? 'Creating...' : 'Create job'}</Button>
-            {status ? <span className="p" role="status">{status}</span> : null}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'stretch' }}>
+            <Button type="button" variant="ghost" onClick={addField} style={{ alignSelf: 'flex-start' }}>+ Add field</Button>
+            <Button disabled={loading} type="submit" style={{ alignSelf: 'flex-start' }}>{loading ? 'Creating...' : 'Create job'}</Button>
+            {status ? <div className="p" role="status" style={{ textAlign: 'center', padding: '8px 12px', background: 'rgba(248,113,113,0.1)', borderRadius: '8px', border: '1px solid rgba(248,113,113,0.2)', color: 'var(--danger)' }}>{status}</div> : null}
           </div>
         </form>
       </Card>
