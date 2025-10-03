@@ -5,6 +5,7 @@ export type Job = {
   company: string
   role: string
   deadline: string // ISO date (yyyy-mm-dd)
+  deadline_at?: string | null // full ISO timestamp (required in UI)
   min_ug_cgpa: number | null
   created_at?: string
 }
@@ -60,6 +61,7 @@ export async function createJobWithFields(job: Omit<Job, 'id' | 'created_at'>, f
       company: job.company,
       role: job.role,
       deadline: job.deadline,
+      deadline_at: job.deadline_at ?? null,
       min_ug_cgpa: job.min_ug_cgpa ?? null,
     })
     .select('*')

@@ -17,7 +17,8 @@ function slugify(input: string) {
 export default function AdminCreateJob() {
   const [company, setCompany] = useState('')
   const [role, setRole] = useState('')
-  const [deadline, setDeadline] = useState('')
+  const [deadlineDate, setDeadlineDate] = useState('')
+  const [deadlineTime, setDeadlineTime] = useState('')
   const [minCgpa, setMinCgpa] = useState<string>('')
   const [fieldLabels, setFieldLabels] = useState<string[]>([])
   const [status, setStatus] = useState<string | null>(null)
@@ -38,10 +39,12 @@ export default function AdminCreateJob() {
         .filter(Boolean)
         .map(label => ({ key: slugify(label), label, type: 'text', required: false }))
 
+      const localDateTime = `${deadlineDate}T${deadlineTime}`
       await createJobWithFields({
         company,
         role,
-        deadline,
+        deadline: deadlineDate,
+        deadline_at: new Date(localDateTime).toISOString(),
         min_ug_cgpa: minCgpa === '' ? null : Number(minCgpa),
       }, fieldsForApi)
 
@@ -67,8 +70,12 @@ export default function AdminCreateJob() {
             <input className="input" value={role} onChange={(e) => setRole(e.target.value)} required />
           </div>
           <div className="field">
-            <span className="p">Deadline</span>
-            <input className="input" type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} required />
+            <span className="p">Deadline date</span>
+            <input className="input" type="date" value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} required />
+          </div>
+          <div className="field">
+            <span className="p">Deadline time</span>
+            <input className="input" type="time" value={deadlineTime} onChange={(e) => setDeadlineTime(e.target.value)} required />
           </div>
           <div className="field">
             <span className="p">Min UG CGPA (optional)</span>

@@ -10,7 +10,8 @@ export default function AdminEditJob() {
   const navigate = useNavigate()
   const [company, setCompany] = useState('')
   const [role, setRole] = useState('')
-  const [deadline, setDeadline] = useState('')
+  const [deadlineDate, setDeadlineDate] = useState('')
+  const [deadlineTime, setDeadlineTime] = useState('')
   const [minCgpa, setMinCgpa] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -25,7 +26,12 @@ export default function AdminEditJob() {
         if (!act || !j) return
         setCompany(j.company)
         setRole(j.role)
-        setDeadline(j.deadline)
+        const base = j.deadline_at ?? (j.deadline ? `${j.deadline}T23:59` : '')
+        if (base) {
+          const d = new Date(base)
+          setDeadlineDate(d.toISOString().slice(0,10))
+          setDeadlineTime(d.toTimeString().slice(0,5))
+        }
         setMinCgpa(j.min_ug_cgpa != null ? String(j.min_ug_cgpa) : '')
       } finally {
         setLoading(false)
@@ -41,10 +47,12 @@ export default function AdminEditJob() {
     setSaving(true)
     setStatus(null)
     try {
+      const localDateTime = `${deadlineDate}T${deadlineTime}`
       await updateJob(jobId, {
         company,
         role,
-        deadline,
+        deadline: deadlineDate,
+        deadline_at: new Date(localDateTime).toISOString(),
         min_ug_cgpa: minCgpa === '' ? null : Number(minCgpa),
       })
       navigate('/admin', { replace: true })
@@ -71,8 +79,12 @@ export default function AdminEditJob() {
             <input className="input" value={role} onChange={(e) => setRole(e.target.value)} required />
           </div>
           <div className="field">
-            <span className="p">Deadline</span>
-            <input className="input" type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} required />
+            <span className="p">Deadline date</span>
+            <input className="input" type="date" value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} required />
+          </div>
+          <div className="field">
+            <span className="p">Deadline time</span>
+            <input className="input" type="time" value={deadlineTime} onChange={(e) => setDeadlineTime(e.target.value)} required />
           </div>
           <div className="field">
             <span className="p">Min UG CGPA (optional)</span>
