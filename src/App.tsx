@@ -37,7 +37,7 @@ function App() {
           >
             whatsapp cheytha mathi
           </a>
-          , call cheyyalle pls😊🙏
+          , call cheyyalle pls🙂🙏
         </div>
       </footer>
     </div>
