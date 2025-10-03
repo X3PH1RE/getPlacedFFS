@@ -39,6 +39,8 @@ export default function Admin() {
   const [students, setStudents] = useState<Student[]>([])
   const [loadingStudents, setLoadingStudents] = useState(false)
   const [activeTab, setActiveTab] = useState<'jobs' | 'students'>('jobs')
+  const [deleteConfirm, setDeleteConfirm] = useState<{ jobId: string, company: string, role: string } | null>(null)
+  const [deleteText, setDeleteText] = useState('')
   const subscriptionsRef = useRef<Record<string, ReturnType<typeof supabase.channel> | null>>({})
   const navigate = useNavigate()
 
@@ -63,9 +65,30 @@ export default function Admin() {
     }
   }, [])
 
-  async function handleDelete(jobId: string) {
-    await deleteJob(jobId)
-    setJobs(prev => prev.filter(j => j.id !== jobId))
+  function handleDeleteClick(job: Job) {
+    setDeleteConfirm({ jobId: job.id, company: job.company, role: job.role })
+    setDeleteText('')
+  }
+
+  function handleDeleteCancel() {
+    setDeleteConfirm(null)
+    setDeleteText('')
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteConfirm || deleteText !== 'delete') return
+    
+    try {
+      await deleteJob(deleteConfirm.jobId)
+      setJobs(prev => prev.filter(j => j.id !== deleteConfirm.jobId))
+      setStatus(`Job "${deleteConfirm.company} — ${deleteConfirm.role}" deleted successfully`)
+      setTimeout(() => setStatus(null), 3000)
+    } catch (err: any) {
+      setStatus(err.message || 'Failed to delete job')
+    } finally {
+      setDeleteConfirm(null)
+      setDeleteText('')
+    }
   }
 
   async function copyPublicLink(jobId: string) {
@@ -230,6 +253,56 @@ export default function Admin() {
 
       {status ? <div className="p" role="status">{status}</div> : null}
 
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div style={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          background: 'rgba(0,0,0,0.8)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', background: 'var(--surface)', border: '1px solid rgba(255,255,255,0.2)' }}>
+            <div className="h1" style={{ color: 'var(--danger)', marginBottom: '12px' }}>Delete Job</div>
+            <div className="p" style={{ marginBottom: '16px' }}>
+              Are you sure you want to delete <strong>"{deleteConfirm.company} — {deleteConfirm.role}"</strong>?
+            </div>
+            <div className="p" style={{ marginBottom: '16px', color: 'var(--muted)' }}>
+              This action is irreversible and will permanently remove the job and all associated data.
+            </div>
+            <div className="field" style={{ marginBottom: '20px' }}>
+              <span className="p">Type "delete" to confirm:</span>
+              <input 
+                className="input" 
+                value={deleteText} 
+                onChange={(e) => setDeleteText(e.target.value)} 
+                placeholder="Type 'delete' here"
+                autoFocus
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <Button variant="ghost" onClick={handleDeleteCancel}>Cancel</Button>
+              <Button 
+                onClick={handleDeleteConfirm} 
+                disabled={deleteText !== 'delete'}
+                style={{ 
+                  background: deleteText === 'delete' ? 'var(--danger)' : 'var(--muted)',
+                  color: 'white'
+                }}
+              >
+                Delete Job
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'jobs' ? (
         loadingJobs ? null : (
           <div style={{ display: 'grid', gap: 12 }}>
@@ -294,7 +367,7 @@ export default function Admin() {
                         <Button variant="ghost" onClick={() => handleExport(j)} style={{ fontSize: '11px', padding: '6px 8px' }}>Export</Button>
                         <Button variant="ghost" onClick={() => copyPublicLink(j.id)} style={{ fontSize: '11px', padding: '6px 8px' }}>Copy Link</Button>
                         <Link className="link" to={`/public/job/${j.id}`} style={{ fontSize: '11px', padding: '6px 8px', textAlign: 'center', background: 'rgba(120,166,255,0.1)', borderRadius: '6px', border: '1px solid rgba(120,166,255,0.2)' }}>View</Link>
-                        <Button variant="ghost" onClick={() => handleDelete(j.id)} style={{ fontSize: '11px', padding: '6px 8px', color: 'var(--danger)' }}>Delete</Button>
+                        <Button variant="ghost" onClick={() => handleDeleteClick(j)} style={{ fontSize: '11px', padding: '6px 8px', color: 'var(--danger)' }}>Delete</Button>
                       </div>
                     </div>
                   ) : null}
