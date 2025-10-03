@@ -8,15 +8,24 @@ export type AdminAuthValue = {
 
 const AdminAuthContext = createContext<AdminAuthValue | undefined>(undefined)
 
-const ADMIN_ID = 'ashwinadmin'
-const ADMIN_PASS = 'novacrat502'
+// Support multiple admins via environment variables
+const ADMIN_CREDENTIALS = [
+  {
+    id: import.meta.env.VITE_ADMIN_ID || 'ashwinadmin',
+    password: import.meta.env.VITE_ADMIN_PASSWORD || 'novacrat502'
+  },
+  {
+    id: import.meta.env.VITE_ADMIN_ID_2 || '',
+    password: import.meta.env.VITE_ADMIN_PASSWORD_2 || ''
+  }
+].filter(admin => admin.id && admin.password) // Only include admins with both ID and password
 const LS_KEY = 'admin-auth'
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState<boolean>(() => localStorage.getItem(LS_KEY) === '1')
 
   async function login(id: string, password: string) {
-    const ok = id === ADMIN_ID && password === ADMIN_PASS
+    const ok = ADMIN_CREDENTIALS.some(admin => admin.id === id && admin.password === password)
     if (ok) {
       setIsAdmin(true)
       localStorage.setItem(LS_KEY, '1')
