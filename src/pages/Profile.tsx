@@ -46,8 +46,8 @@ export default function Profile() {
           gender: existing?.gender ?? '',
           email: existing?.email ?? (user.email ?? ''),
           contact_no: existing?.contact_no ?? '',
-          department: existing?.department ?? '',
-          course: existing?.course ?? '',
+          department: 'School of Engineering, CUSAT',
+          course: 'BTech Information Technology',
           date_of_birth: existing?.date_of_birth ?? '',
           home_town: existing?.home_town ?? '',
           languages_known: existing?.languages_known ?? '',
@@ -56,7 +56,7 @@ export default function Profile() {
           ug_cgpa: existing?.ug_cgpa ?? null,
           pg_cgpa: existing?.pg_cgpa ?? null,
           backlogs: existing?.backlogs ?? null,
-          year_of_passing: existing?.year_of_passing ?? null,
+          year_of_passing: 2026,
         }
         setForm(base)
       } catch (e: any) {
@@ -80,7 +80,15 @@ export default function Profile() {
     setSaving(true)
     setStatus(null)
     try {
-      await upsertProfile(user.id, form as any)
+      const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val))
+      const sanitized = {
+        ...form,
+        ug_cgpa: form.ug_cgpa == null ? null : clamp(form.ug_cgpa, 0, 10),
+        pg_cgpa: form.pg_cgpa == null ? null : clamp(form.pg_cgpa, 0, 10),
+        backlogs: form.backlogs == null ? null : clamp(form.backlogs, 0, 15),
+        year_of_passing: 2026,
+      }
+      await upsertProfile(user.id, sanitized as any)
       setStatus('Saved')
     } catch (err: any) {
       setStatus(err.message || 'Failed to save')
@@ -106,7 +114,11 @@ export default function Profile() {
           </div>
           <div className="field">
             <span className="p">Gender</span>
-            <input className="input" value={form.gender} onChange={(e) => update('gender', e.target.value)} required />
+            <select className="input" value={form.gender} onChange={(e) => update('gender', e.target.value)} required>
+              <option value="">Select...</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
           </div>
           <div className="field">
             <span className="p">Email</span>
@@ -118,11 +130,11 @@ export default function Profile() {
           </div>
           <div className="field">
             <span className="p">School / Department</span>
-            <input className="input" value={form.department} onChange={(e) => update('department', e.target.value)} required />
+            <input className="input" value={form.department} disabled />
           </div>
           <div className="field">
             <span className="p">Course</span>
-            <input className="input" value={form.course} onChange={(e) => update('course', e.target.value)} required />
+            <input className="input" value={form.course} disabled />
           </div>
           <div className="field">
             <span className="p">Date of Birth</span>
@@ -146,19 +158,37 @@ export default function Profile() {
           </div>
           <div className="field">
             <span className="p">UG CGPA</span>
-            <input className="input" type="number" step="0.01" value={form.ug_cgpa ?? ''} onChange={(e) => update('ug_cgpa', e.target.value === '' ? null : Number(e.target.value))} required />
+            <input className="input" type="number" step="0.01" min={0} max={10} value={form.ug_cgpa ?? ''} onChange={(e) => {
+              const v = e.target.value
+              if (v === '') return update('ug_cgpa', null)
+              const num = Number(v)
+              const clamped = Math.max(0, Math.min(10, isNaN(num) ? 0 : num))
+              update('ug_cgpa', clamped)
+            }} required />
           </div>
           <div className="field">
             <span className="p">PG CGPA</span>
-            <input className="input" type="number" step="0.01" value={form.pg_cgpa ?? ''} onChange={(e) => update('pg_cgpa', e.target.value === '' ? null : Number(e.target.value))} />
+            <input className="input" type="number" step="0.01" min={0} max={10} value={form.pg_cgpa ?? ''} onChange={(e) => {
+              const v = e.target.value
+              if (v === '') return update('pg_cgpa', null)
+              const num = Number(v)
+              const clamped = Math.max(0, Math.min(10, isNaN(num) ? 0 : num))
+              update('pg_cgpa', clamped)
+            }} />
           </div>
           <div className="field">
             <span className="p">Backlogs</span>
-            <input className="input" type="number" value={form.backlogs ?? ''} onChange={(e) => update('backlogs', e.target.value === '' ? null : Number(e.target.value))} required />
+            <input className="input" type="number" min={0} max={15} value={form.backlogs ?? ''} onChange={(e) => {
+              const v = e.target.value
+              if (v === '') return update('backlogs', null)
+              const num = Number(v)
+              const clamped = Math.max(0, Math.min(15, isNaN(num) ? 0 : num))
+              update('backlogs', clamped)
+            }} required />
           </div>
           <div className="field">
             <span className="p">Year of Passing</span>
-            <input className="input" type="number" value={form.year_of_passing ?? ''} onChange={(e) => update('year_of_passing', e.target.value === '' ? null : Number(e.target.value))} required />
+            <input className="input" type="number" value={2026} disabled />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'stretch' }}>
             <Button disabled={saving} type="submit" style={{ alignSelf: 'flex-start' }}>{saving ? 'Saving...' : 'Save changes'}</Button>

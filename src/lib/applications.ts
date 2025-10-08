@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient'
 import { getProfile } from './profile'
+import { getJob } from './jobs'
 
 export type Application = {
   id: string
@@ -28,10 +29,47 @@ export type ApplicationRow = {
   pg_cgpa: number | null
   backlogs: number | null
   year_of_passing: number | null
+  extra_fields?: Record<string, any>
   created_at?: string
 }
 
-export async function applyToJob(jobId: string, userId: string) {
+export async function applyToJob(jobId: string, userId: string, extraFields?: Record<string, any>) {
+  // Enforce CGPA eligibility before inserting application
+  const [job, profile] = await Promise.all([
+    getJob(jobId),
+    getProfile(userId),
+  ])
+
+  // Block if profile is incomplete (required fields missing)
+  const requiredKeys: Array<keyof NonNullable<typeof profile>> = [
+    'name',
+    'gender',
+    'email',
+    'contact_no',
+    'department',
+    'course',
+    'date_of_birth',
+    'home_town',
+    'languages_known',
+    'tenth_percent',
+    'twelfth_or_diploma_percent',
+    'ug_cgpa',
+    'backlogs',
+    'year_of_passing',
+  ]
+  const isBlank = (v: any) => v == null || (typeof v === 'string' && v.trim() === '')
+  const hasIncomplete = !profile || requiredKeys.some(k => isBlank((profile as any)[k]))
+  if (hasIncomplete) {
+    throw new Error('Complete your profile before applying')
+  }
+
+  if (job && job.min_ug_cgpa != null) {
+    const userCgpa = profile?.ug_cgpa
+    if (userCgpa == null || userCgpa < job.min_ug_cgpa) {
+      throw new Error("You can't apply because of your CGPA")
+    }
+  }
+
   const { data: app, error } = await supabase
     .from('applications')
     .insert({ job_id: jobId, user_id: userId })
@@ -40,9 +78,9 @@ export async function applyToJob(jobId: string, userId: string) {
   if (error) throw error
 
   // Optional denormalized insert for export/public sheets
-  const profile = await getProfile(userId)
   if (profile) {
-    await supabase.from('application_rows').insert({
+    // Try with extra_fields first, fallback to without if column doesn't exist
+    const insertData = {
       job_id: jobId,
       user_id: userId,
       student_no: profile.student_no,
@@ -61,7 +99,14 @@ export async function applyToJob(jobId: string, userId: string) {
       pg_cgpa: profile.pg_cgpa,
       backlogs: profile.backlogs,
       year_of_passing: profile.year_of_passing,
-    })
+      ...(extraFields || {}), // Spread extra fields as individual columns
+    }
+    
+    const { error: rowError } = await supabase.from('application_rows').insert(insertData)
+    if (rowError) {
+      console.error('Failed to insert application row:', rowError)
+      // Don't throw here - the main application was successful
+    }
   }
 
   return app
@@ -104,8 +149,17 @@ export async function listApplicationsWithProfiles(jobId: string): Promise<Appli
   if (profErr) throw profErr
   const idToProfile = new Map((profiles ?? []).map((p: any) => [p.id, p]))
 
+  // Also fetch application_rows for extra fields data
+  const { data: rows, error: rowsErr } = await supabase
+    .from('application_rows')
+    .select('user_id, extra_fields')
+    .eq('job_id', jobId)
+  if (rowsErr) throw rowsErr
+  const userIdToExtraFields = new Map((rows ?? []).map((r: any) => [r.user_id, r.extra_fields || {}]))
+
   return applications.map(a => {
     const p = idToProfile.get(a.user_id) || {}
+    const extraFields = userIdToExtraFields.get(a.user_id) || {}
     return {
       id: a.id,
       job_id: a.job_id,
@@ -127,6 +181,7 @@ export async function listApplicationsWithProfiles(jobId: string): Promise<Appli
       pg_cgpa: p.pg_cgpa ?? null,
       backlogs: p.backlogs ?? null,
       year_of_passing: p.year_of_passing ?? null,
+      extra_fields: extraFields,
     } as ApplicationRow
   })
 }

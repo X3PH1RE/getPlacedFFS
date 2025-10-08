@@ -22,14 +22,24 @@ export default function AdminCreateJob() {
   const [deadlineDate, setDeadlineDate] = useState('')
   const [deadlineTime, setDeadlineTime] = useState('')
   const [minCgpa, setMinCgpa] = useState<string>('')
+  const [applyMode, setApplyMode] = useState<'sheet' | 'link'>('sheet')
+  const [applyLink, setApplyLink] = useState<string>('')
   const [fieldLabels, setFieldLabels] = useState<string[]>([])
+  const [fieldRequired, setFieldRequired] = useState<boolean[]>([])
   const [status, setStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  function addField() { setFieldLabels(prev => [...prev, '']) }
+  function addField() { 
+    setFieldLabels(prev => [...prev, ''])
+    setFieldRequired(prev => [...prev, false])
+  }
   function updateField(idx: number, label: string) { setFieldLabels(prev => prev.map((v, i) => i === idx ? label : v)) }
-  function removeField(idx: number) { setFieldLabels(prev => prev.filter((_, i) => i !== idx)) }
+  function updateRequired(idx: number, required: boolean) { setFieldRequired(prev => prev.map((v, i) => i === idx ? required : v)) }
+  function removeField(idx: number) { 
+    setFieldLabels(prev => prev.filter((_, i) => i !== idx))
+    setFieldRequired(prev => prev.filter((_, i) => i !== idx))
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
@@ -37,9 +47,9 @@ export default function AdminCreateJob() {
     setStatus(null)
     try {
       const fieldsForApi: Array<Omit<JobField, 'id' | 'job_id'>> = fieldLabels
-        .map(label => label.trim())
-        .filter(Boolean)
-        .map(label => ({ key: slugify(label), label, type: 'text', required: false }))
+        .map((label, idx) => ({ label: label.trim(), required: fieldRequired[idx] || false }))
+        .filter(f => f.label)
+        .map(f => ({ key: slugify(f.label), label: f.label, type: 'text', required: f.required }))
 
       const localDateTime = `${deadlineDate}T${deadlineTime}`
       await createJobWithFields({
@@ -48,6 +58,8 @@ export default function AdminCreateJob() {
         deadline: deadlineDate,
         deadline_at: new Date(localDateTime).toISOString(),
         min_ug_cgpa: minCgpa === '' ? null : Number(minCgpa),
+        apply_mode: applyMode,
+        apply_link: applyMode === 'link' ? (applyLink.trim() || null) : null,
       }, fieldsForApi)
 
       navigate('/admin', { replace: true })
@@ -90,12 +102,38 @@ export default function AdminCreateJob() {
           </div>
 
           <div className="divider" />
+          <div className="h2">Application mode</div>
+          <div className="field">
+            <span className="p">Apply mode</span>
+            <select className="input" value={applyMode} onChange={(e) => setApplyMode((e.target.value as 'sheet' | 'link'))}>
+              <option value="sheet">Sheet (collect applications here)</option>
+              <option value="link">External link (redirect on apply)</option>
+            </select>
+          </div>
+          {applyMode === 'link' ? (
+            <div className="field">
+              <span className="p">Apply link</span>
+              <input className="input" type="url" placeholder="https://example.com/apply" value={applyLink} onChange={(e) => setApplyLink(e.target.value)} required={applyMode === 'link'} pattern="https?://.*" title="Enter a valid URL starting with http:// or https://" />
+            </div>
+          ) : null}
+
+          <div className="divider" />
           <div className="h2">Extra fields to ask students (names only)</div>
           {fieldLabels.map((label, idx) => (
             <div key={idx} className="card" style={{ display: 'grid', gap: 10 }}>
               <div className="field">
                 <span className="p">Field name</span>
                 <input className="input" value={label} onChange={(e) => updateField(idx, e.target.value)} placeholder="e.g. Aadhaar number" />
+              </div>
+              <div className="field">
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input 
+                    type="checkbox" 
+                    checked={fieldRequired[idx] || false} 
+                    onChange={(e) => updateRequired(idx, e.target.checked)} 
+                  />
+                  <span className="p">Required field</span>
+                </label>
               </div>
               <div className="p">Key preview: <code>{slugify(label) || '—'}</code></div>
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>

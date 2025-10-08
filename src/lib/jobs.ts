@@ -7,6 +7,8 @@ export type Job = {
   deadline: string // ISO date (yyyy-mm-dd)
   deadline_at?: string | null // full ISO timestamp (required in UI)
   min_ug_cgpa: number | null
+  apply_mode?: 'sheet' | 'link' | null
+  apply_link?: string | null
   created_at?: string
 }
 
@@ -63,6 +65,8 @@ export async function createJobWithFields(job: Omit<Job, 'id' | 'created_at'>, f
       deadline: job.deadline,
       deadline_at: job.deadline_at ?? null,
       min_ug_cgpa: job.min_ug_cgpa ?? null,
+      apply_mode: (job as any).apply_mode ?? 'sheet',
+      apply_link: (job as any).apply_link ?? null,
     })
     .select('*')
     .single()
@@ -85,4 +89,13 @@ export async function createJobWithFields(job: Omit<Job, 'id' | 'created_at'>, f
   }
 
   return { job: jobRow as Job, fields: createdFields }
+}
+
+export async function listJobFields(jobId: string): Promise<JobField[]> {
+  const { data, error } = await supabase
+    .from('job_fields')
+    .select('*')
+    .eq('job_id', jobId)
+  if (error) throw error
+  return data as JobField[]
 }

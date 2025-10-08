@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import SectionHeader from '../components/SectionHeader'
 import Card from '../components/Card'
 import Button from '../components/Button'
-import { deleteJob, listJobs, type Job } from '../lib/jobs'
+import { deleteJob, listJobs, listJobFields, type Job, type JobField } from '../lib/jobs'
 import { listApplicationsWithProfiles } from '../lib/applications'
 import { formatDate, formatDateTime } from '../lib/date'
 import { supabase } from '../lib/supabaseClient'
@@ -131,8 +131,9 @@ export default function Admin() {
     }
   }
 
-  function formatExportRows(rows: any[]) {
-    return rows.map(r => ({
+  function formatExportRows(rows: any[], fields: JobField[]) {
+    return rows.map(r => {
+      const base: any = {
       'No.': r.student_no ?? '',
       'Name': r.name ?? '',
       'Gender': r.gender ?? '',
@@ -148,8 +149,18 @@ export default function Admin() {
       'UG CGPA': r.ug_cgpa ?? '',
       'PG CGPA': r.pg_cgpa ?? '',
       'Backlogs': r.backlogs ?? '',
-      'Year of passing': r.year_of_passing ?? '',
-    }))
+        'Year of passing': r.year_of_passing ?? '',
+      }
+
+      // Append dynamic job fields by label
+      fields.forEach(f => {
+        // Try to get from extra_fields JSON column first, then fallback to individual columns
+        const extraFields = (r as any).extra_fields || {}
+        const value = extraFields[f.key] ?? (r as any)[f.key] ?? ''
+        base[f.label] = value
+      })
+      return base
+    })
   }
 
   async function fetchStudents() {
@@ -172,11 +183,14 @@ export default function Admin() {
     try {
       await fetchApplicants(job.id)
       const raw = applicantsByJob[job.id] || []
-      const rows = formatExportRows(raw)
+      const fields: JobField[] = await listJobFields(job.id)
+      const rows = formatExportRows(raw, fields)
       // @ts-ignore
       const XLSX = (await import('xlsx')).default || (await import('xlsx'))
+      const dynamicHeaders = fields.map(f => f.label)
       const worksheet = XLSX.utils.json_to_sheet(rows, { header: [
-        'No.','Name','Gender','Email','Contact No.','School/ Department','Course','Date of Birth','Home town','Languages known','10th %','12th/ Diploma %','UG CGPA','PG CGPA','Backlogs','Year of passing'
+        'No.','Name','Gender','Email','Contact No.','School/ Department','Course','Date of Birth','Home town','Languages known','10th %','12th/ Diploma %','UG CGPA','PG CGPA','Backlogs','Year of passing',
+        ...dynamicHeaders
       ] })
       const workbook = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Applicants')
